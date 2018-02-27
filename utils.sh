@@ -47,20 +47,20 @@ function invoke() {
 }
 
 #######################################
-# Check whether the command exist
+# Check whether the command exist in a safe way
 # Globals:
 #   None
 # Arguments:
-#   <COMMAND>
+#   <command>
 # Returns:
-#   failed:0 / succeed:1
+#   0: found, 1: NOT found
 #######################################
-function check_command() {
+function command_exist() {
     command_found=$(command -v "$1" 2> /dev/null)
     if [[ "$command_found" == "" ]]; then
-        return 0 # NOT found
+        return 1 # NOT found
     else
-        return 1 # Found
+        return 0 # Found
     fi
 }
 
@@ -295,6 +295,9 @@ function inform_sudo() {
 
 #######################################
 # Download the source codes from links if and only if the file does not present
+# If the link starts with "git+", this function will use git to clone the target.
+# Notice that this function use .download as a temporary file to download the targets
+# and then rename the file after completion.
 # Globals:
 #   files       -> array of names to be renamed
 #   sources     -> array of links
@@ -308,16 +311,22 @@ function sources_auto_download() {
     for index in "${!files[@]}"; do
         local tmp_file="${files[$index]}.download"
         local link="${sources[$index]}"
+
         if [[ "$link" == "git+"* ]]; then
             link="${link##git+}"  # Remove git+ word
+            # git clone if the target deos not exist
             if [[ ! -d "${files[$index]}" ]]; then
                 git clone --depth 10 "$link" "${files[$index]}"
                 [[ $? != 0 ]] && print_message_and_exit "git clone to '${files[$index]}'"
             fi
         else
+            # Download link as a temporary file (*.download)
             [[ ! -f "${files[$index]}" ]] && wget -c "$link" -O "$tmp_file"
+            # Rename the file after completion
             [[ $? == 0 ]] && mv "$tmp_file" "${files[$index]}"
+            # Print fail if the file does not exist
             [[ ! -f "${files[$index]}" ]] && print_message_and_exit "Download '${files[$index]}'"
+            # Check sha256 sum
             check_sha256 "${files[$index]}" ${sha256sums[$index]}
             [[ $? != 0 ]] && print_message_and_exit "'${files[$index]}' sha256sum does not match!!"
         fi
@@ -395,6 +404,7 @@ function build_system_main() {
             cd "$BUILD_DIR" && invoke build
             cd "$BUILD_DIR" && enter_fake_root
         else
+            cd "$BUILD_DIR"
             # User defined build stage
             [[ "$1" == "sources_auto_download" ]] && invoke sources_auto_download
             [[ "$1" == "pre_install" ]] && invoke pre_install

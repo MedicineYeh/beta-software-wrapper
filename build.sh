@@ -14,7 +14,7 @@ function prepare() {
     [[ $? != 0 ]] && print_message_and_exit "Fail to change dir to beta-software"
 
     for cmd in qemu-arm-static qemu-aarch64-static update-binfmts rsync; do
-        check_command $cmd && print_message_and_exit "Cannot find command '$cmd'"
+        ! command_exist $cmd && print_message_and_exit "Cannot find command '$cmd'"
     done
 }
 
