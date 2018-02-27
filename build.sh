@@ -24,12 +24,12 @@ function build() {
     [[ $? != 0 ]] && print_message_and_exit "Fail to change dir to beta-software"
 
     echo -e "\n${COLOR_GREEN}building the rootfs:${NC}\n"
-    #inform_sudo build_tools/outside/build_rootfs.sh
+    inform_sudo build_tools/outside/build_rootfs.sh
     [[ $? != 0 ]] && print_message_and_exit "build_tools/outside/build_rootfs.sh"
 
 
     echo -e "\n${COLOR_GREEN}building the kernel:${NC}\n"
-    #inform_sudo build_tools/outside/build_kernel.sh
+    inform_sudo build_tools/outside/build_kernel.sh
     [[ $? != 0 ]] && print_message_and_exit "build_tools/outside/build_kernel.sh"
 
 
